@@ -8,11 +8,11 @@ Mākslīgā intelekta pamati(1),24/25-P 1.praktiskais darbs
 # Spēles gaita
 1. Spēlētājs iepazīstas ar spēles noteikumiem;
 2. Tiek pieprasīti ievades dati: 
-   - spēles skaitļu virknes garums(no 15 līdz 25)
-   - pirmais spēlētājs
+   - spēles skaitļu virknes garums(no 15 līdz 25);
+   - pirmais spēlētājs;
    - opcionāli ievades lauki(ja netiek ievadīts, tad tiek iestatīta noklusējuma vērtība):
-     - algoritma pārmeklēšanas dziļums
-     - algoritma tips (Minimaksa vai Alfa-beta algoritms)
+     - algoritma pārmeklēšanas dziļums;
+     - algoritma tips (Minimaksa vai Alfa-beta algoritms).
 3. Spēles sākumā ir dota ģenerētā skaitļu virkne un abu spēlētāju punktu skaits ir 0.
 4. Spēlētājs izpilda gājienus pēc kārtas. 
    - Gājiena laikā spēlētājs var: 
