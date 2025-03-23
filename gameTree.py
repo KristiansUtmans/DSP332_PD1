@@ -147,14 +147,14 @@ def evaluate_node(node):
     #     self.root = GameNode("")
 
 
-startVertex = GameNode("1", [1,2,3,4,5,6,7])
-tree = GameTree(startVertex)
+startNode = GameNode("1", [1,2,3,4,5,6,7])
+tree = GameTree(startNode)
 
 tree.generateGameTree(2)
-print(RenderTree(startVertex, style=ContRoundStyle()).by_attr(attrname="setOfNumbers"))
+print(RenderTree(startNode, style=ContRoundStyle()).by_attr(attrname="setOfNumbers"))
 print(evaluate_node(tree.getRoot().children[0].children[0]))
 
-# print(RenderTree(startVertex, style=AsciiStyle()).by_attr())
+# print(RenderTree(startNode, style=AsciiStyle()).by_attr())
 #
 # class Node():
 
