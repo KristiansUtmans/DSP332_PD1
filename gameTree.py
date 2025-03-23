@@ -1,5 +1,14 @@
-from anytree import Node, RenderTree, AsciiStyle, ContRoundStyle
+from anytree import Node, RenderTree, AsciiStyle, ContRoundStyle, NodeMixin
 from collections import deque
+
+# Heiristiskās funkcijas koeficienti
+
+# Punktu izmaiņas koeficients
+SCORE_DIFFERENCE_COEFFICIENT = 3
+# Labo pāru koeficients
+GOOD_PAIR_COEFFICIENT = 0.5
+# Kopējā skaita koeficients
+TOTAL_SUM_COEFFICIENT = 0.1
 
 def generateNodeAddress(name):
     lastDelimiter = name.rfind('.')
@@ -13,18 +22,19 @@ def generateNodeAddress(name):
         return name[:lastDelimiter]
 
 # Koka virsotne
-class GameNode(Node):
+class GameNode(NodeMixin):
     def __init__(self, name, setOfNumbers = None, playerPoints = 0, computerPoints = 0, computerTurn = True, parent = None, **kwargs):
-        super().__init__(name, **kwargs)
+        super().__init__()
 
         if setOfNumbers is None:
             setOfNumbers = []
 
+        self.name = name
         self.setOfNumbers = setOfNumbers.copy()
-        self.parent = parent
         self.playerPoints = playerPoints
         self.computerPoints = computerPoints
         self.computerTurn = computerTurn
+        self.parent = parent
 
     def getName(self):
         return self.name
@@ -102,6 +112,27 @@ class GameTree:
                 # Pievienot virsotni deka beigās, labajā pusē, lai vēlāk caurskatītu tālāk
                 queue.append((newNode, currentDepth + 1))
 
+def evaluate_node(node):
+    # Heiristiskā novērtēšanas funkcija
+
+    playerScore = node.getPlayerPoints()
+    computerScore = node.getComputerPoints()
+    setOfNumbers = node.getSetOfNumbers().copy()
+    goodPairs = 0
+    badPairs = 0
+    totalSum = setOfNumbers[0]
+
+    for i in range(len(setOfNumbers) - 1):
+        if setOfNumbers[i] + setOfNumbers[i + 1] > 6:
+            goodPairs += 1
+        else:
+            badPairs += 1
+        totalSum += setOfNumbers[i + 1]
+
+    return (SCORE_DIFFERENCE_COEFFICIENT * (computerScore - playerScore) +
+            GOOD_PAIR_COEFFICIENT * (goodPairs - badPairs) +
+            TOTAL_SUM_COEFFICIENT * totalSum)
+
     # Implement min-max and alpha-beta algorithms, anytree - PostOrderIter() can help
     # def generateWithMiniMax(self):
     #
@@ -121,6 +152,7 @@ tree = GameTree(startVertex)
 
 tree.generateGameTree(2)
 print(RenderTree(startVertex, style=ContRoundStyle()).by_attr(attrname="setOfNumbers"))
+print(evaluate_node(tree.getRoot().children[0].children[0]))
 
 # print(RenderTree(startVertex, style=AsciiStyle()).by_attr())
 #
