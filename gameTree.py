@@ -4,11 +4,13 @@ from collections import deque
 # Heiristiskās funkcijas koeficienti
 
 # Punktu izmaiņas koeficients
-SCORE_DIFFERENCE_COEFFICIENT = 3
+SCORE_DIFFERENCE_COEFFICIENT = 8
 # Labo pāru koeficients
-GOOD_PAIR_COEFFICIENT = 0.5
-# Kopējā skaita koeficients
-TOTAL_SUM_COEFFICIENT = 0.1
+GOOD_PAIR_COEFFICIENT = 2
+# Kopējā skaitļu koeficients
+TOTAL_SUM_COEFFICIENT = 1
+# Paredzamas labas spēles beigu koeficients
+BENEFICIAL_ENDGAME_COEFFICIENT = 15
 
 # Realizē gājiena punktu izmaiņas nosacījumus
 def updatePoints(number, points):
@@ -17,9 +19,19 @@ def updatePoints(number, points):
     else:
         return number - 6, points + 1
 
-# Koka virsotne
+""" 
+Koka virsotne, tiek mantota no NodeMixin
+params:
+name - Simbolu virkne, virsotnes nosaukums, tiek izmantota universālā adrešu sistēma
+playerPoints - Skaitlis, Spēlētāja punkti šajā koka virsotnē
+computerPoints - Skaitlis, Datora punkti šajā koka virsotnē
+computerTurn - Būla vērtība, Vai šajā virsotnē ir datora gājiens
+value - Skaitlis, heiristiskā virsotnes vērtība
+parent - Atsauce uz vecāka virsotni
+NodeMixin parametri, to ietvarā: children - Kopums ar virsotnēm, kas ir šīs virsotnes bērni
+"""
 class GameNode(NodeMixin):
-    def __init__(self, name, setOfNumbers = None, playerPoints = 0, computerPoints = 0, computerTurn = True, parent = None):
+    def __init__(self, name, setOfNumbers = None, computerTurn = True, playerPoints = 0, computerPoints = 0, value = None, parent = None):
         super().__init__()
 
         if setOfNumbers is None:
@@ -31,12 +43,26 @@ class GameNode(NodeMixin):
         self.computerPoints = computerPoints
         self.computerTurn = computerTurn
         self.parent = parent
+        self.value = value
 
     def evaluate_node(self):
         # Heiristiskā novērtējuma funkcija
         goodPairs = 0
         badPairs = 0
         totalSum = self.setOfNumbers[0]
+
+        # Ja
+        if len(self.setOfNumbers) == 1:
+            computerWin = self.computerPoints > self.playerPoints
+            computerLoss = self.computerPoints < self.playerPoints
+            print(self.computerPoints)
+            print(self.playerPoints)
+            if computerWin:
+                return float('inf')
+            elif computerLoss:
+                return float('-inf')
+            else:
+                return 0
 
         for i in range(len(self.setOfNumbers) - 1):
             if self.setOfNumbers[i] + self.setOfNumbers[i + 1] > 6:
@@ -45,12 +71,23 @@ class GameNode(NodeMixin):
                 badPairs += 1
             totalSum += self.setOfNumbers[i + 1]
 
-        return (SCORE_DIFFERENCE_COEFFICIENT * (self.computerPoints - self.playerPoints) +
+        heuristicValue = (SCORE_DIFFERENCE_COEFFICIENT * (self.computerPoints - self.playerPoints) +
                 GOOD_PAIR_COEFFICIENT * (goodPairs - badPairs) +
                 TOTAL_SUM_COEFFICIENT * totalSum)
 
+        if len(self.setOfNumbers) <= 3 and goodPairs == 1:
+            heuristicValue = heuristicValue + BENEFICIAL_ENDGAME_COEFFICIENT
+
+        return heuristicValue
+
     def getName(self):
         return self.name
+
+    def getValue(self):
+        return self.value
+
+    def setValue(self, value):
+        self.value = value
 
     def getSetOfNumbers(self):
         return self.setOfNumbers
@@ -64,17 +101,81 @@ class GameNode(NodeMixin):
     def isComputerTurn(self):
         return self.computerTurn
 
-# TODO: Spēles koks, kad depth <= 15 - 7 -> ģenerēt pilnu koku
+    def isEndOfGame(self):
+        return len(self.setOfNumbers) == 1
+
+    # Minmax algoritms
+    def minmax(self, depth, maximizingPlayer):
+        # Ja ir sasniegts strupceļš vai maksimālais dziļums,
+        # tad tiek noteikta virsotnes vērtība izmantojot heiristisko funkciju
+        if depth == 0 or self.isEndOfGame():
+            self.value = self.evaluate_node()
+            return self.value
+
+        # Ja spēlētājs ir maksimizētājs, tiek dabūta maksimālā heiristiskā vērtība
+        if maximizingPlayer:
+            maxNodeValue = float('-inf')
+            for childNode in self.children:
+                nodeValue = childNode.minmax(depth - 1, False)
+                maxNodeValue = max(maxNodeValue, nodeValue)
+            self.setValue(maxNodeValue)
+            return maxNodeValue
+
+        # Ja spēlētājs ir minimizētājs, tiek dabūta minimālā heiristiskā vērtība
+        else:
+            minNodeValue = float('inf')
+            for childNode in self.children:
+                nodeValue = childNode.minmax(depth - 1, True)
+                minNodeValue = min(minNodeValue, nodeValue)
+            self.setValue(minNodeValue)
+            return minNodeValue
+
+    # Alfa-Beta algoritms:
+    # Principā strādā tāpat kā min-max algoritms,
+    # tikai loki uz virsotnēm, kuru vērtējums neietekmēs virsotnes vērtējumu tiek nogriezti
+    def alphaBeta(self, depth, alpha, beta, maximizingPlayer):
+        # Ja ir sasniegts strupceļš vai maksimālais dziļums,
+        # tad tiek noteikta virsotnes vērtība izmantojot heiristisko funkciju
+        if depth == 0 or self.isEndOfGame():
+            self.value = self.evaluate_node()
+            return self.value
+
+        # Ja spēlētājs ir maksimizētājs, tiek dabūta maksimālā heiristiskā vērtība
+        if maximizingPlayer:
+            maxNodeValue = float('-inf')
+            for childGameNode in self.children:
+                nodeValue = childGameNode.minmax(depth - 1, False)
+                maxNodeValue = max(maxNodeValue, nodeValue)
+                alpha = max(alpha, nodeValue)
+                if beta <= alpha:
+                    break
+            self.value = maxNodeValue
+            return maxNodeValue
+
+        # Ja spēlētājs ir minimizētājs, tiek dabūta maksimālā heiristiskā vērtība
+        else:
+            minNodeValue = float('inf')
+            for childGameNode in self.children:
+                nodeValue = childGameNode.minmax(depth - 1, True)
+                minNodeValue = min(minNodeValue, nodeValue)
+                beta = min(beta, nodeValue)
+                if beta <= alpha:
+                    break
+            self.value = minNodeValue
+            return minNodeValue
+
+
 class GameTree:
     # Saknes virsotne arī darbojas
-    def __init__(self, root = GameNode("1", parent=None)):
+    def __init__(self, root = GameNode("1", parent=None), maxDepth = 0):
         self.root = root
+        self.maxDepth = maxDepth
 
     def getRoot(self):
         return self.root
 
     # Koka ģenerēšana līdz noteiktam dziļumam
-    def generateGameTree(self, max_depth):
+    def generateGameTree(self):
         print("Generating tree")
 
         # Pārlūkošana izmantojot BFS algoritmu, izmantojot deku(rinda no abām pusēm pārlūkojama)
@@ -85,7 +186,7 @@ class GameTree:
             currentNode, currentDepth = queue.popleft()
 
             # Ja ir sasniegts dziļums vai spēles beigas šajā ceļā, tad izlaist šo virsotni
-            if currentDepth >= max_depth or len(currentNode.getSetOfNumbers()) == 1:
+            if currentDepth >= self.maxDepth or len(currentNode.getSetOfNumbers()) == 1:
                 continue
 
             currentNumbers = currentNode.getSetOfNumbers()
@@ -116,45 +217,36 @@ class GameTree:
                 newName = f"{latestName}.{i}"
 
                 # Uzģenerē jauno virsotni. Iestatot tās vecāku, nav nepieciešams to saglabāt
-                newNode = GameNode(newName, newSetOfNumbers, newPlayerPoints, newComputerPoints, not computerTurn,
+                newNode = GameNode(newName, newSetOfNumbers, not computerTurn, newPlayerPoints, newComputerPoints,
                          parent=currentNode)
 
                 # Pievienot virsotni deka beigās, labajā pusē, lai vēlāk caurskatītu tālāk
                 queue.append([newNode, currentDepth + 1])
 
-    # Implement min-max and alpha-beta algorithms, anytree - PostOrderIter() can help
-    # def generateWithMiniMax(self):
-    #
-    #     computerTurn = True
-    #
-    #     if computerTurn:
-    #         bestScore = -999
-    #
-    #     self.root = GameNode("a")
-    #
-    # def generateWithAlphaBeta(self):
-    #     self.root = GameNode("")
+    def updateTreeWithMinMaxValues(self):
+        self.root.minmax(self.maxDepth, self.root.isComputerTurn())
+
+    def updateTreeWithAlphaBetaValues(self):
+        self.root.alphaBeta(self.maxDepth, float('-inf'), float('inf'), self.root.isComputerTurn())
 
 
-startNode = GameNode("1", [1,2,3,4,5,6,7])
-tree = GameTree(startNode)
+    # Pārlūko koka saknes tuvākās virsotnes un atgriež labākā gājiena(priekš datora) skaitļa virkni
+    def getMinMaxBestMove(self):
+        bestMove = None
+        bestValue = float('-inf')
+        for child in self.root.children:
+            if child.getValue() > bestValue:
+                bestMove = child
 
-tree.generateGameTree(2)
-print(RenderTree(startNode, style=ContRoundStyle()).by_attr(attrname="setOfNumbers"))
-print(tree.getRoot().children[0].evaluate_node())
+        return bestMove.getSetOfNumbers()
 
-# print(RenderTree(startNode, style=AsciiStyle()).by_attr())
-#
-# class Node():
+startNode = GameNode("1", [1,2,3,4,5,6,5,3,2,1], True)
+tree = GameTree(startNode, 4)
+tree.generateGameTree()
+# print(RenderTree(startNode, style=ContRoundStyle()).by_attr(attrname="name"))
+# print(tree.getRoot().children[0].evaluate_node())
+# print(tree.getRoot().minmax(tree.maxDepth, tree.getRoot().isComputerTurn()))
+tree.updateTreeWithMinMaxValues()
+print(RenderTree(startNode, style=ContRoundStyle()).by_attr(attrname="value"))
 
-#
-# f = Node("f")
-# b = Node("b", parent=f)
-# a = Node("a", parent=b)
-# d = Node("d", parent=b)
-# c = Node("c", parent=d)
-# e = Node("e", parent=d)
-# g = Node("g", parent=f)
-# i = Node("i", parent=g)
-# h = Node("h", parent=i)
-# print(RenderTree(f, style=AsciiStyle()).by_attr())
+print(tree.getMinMaxBestMove())
