@@ -7,8 +7,6 @@ from collections import deque
 SCORE_DIFFERENCE_COEFFICIENT = 8
 # Labo pāru koeficients
 GOOD_PAIR_COEFFICIENT = 2
-# Kopējā skaitļu koeficients
-TOTAL_SUM_COEFFICIENT = 1
 # Paredzamas labas spēles beigu koeficients
 BENEFICIAL_ENDGAME_COEFFICIENT = 15
 
@@ -49,34 +47,43 @@ class GameNode(NodeMixin):
         # Heiristiskā novērtējuma funkcija
         goodPairs = 0
         badPairs = 0
-        totalSum = self.setOfNumbers[0]
 
-        # Ja
+        # Ja ir spēles beigas, tad noteikt vai dators zaudēs
         if len(self.setOfNumbers) == 1:
             computerWin = self.computerPoints > self.playerPoints
             computerLoss = self.computerPoints < self.playerPoints
-            print(self.computerPoints)
-            print(self.playerPoints)
+            # Ja dators uzvarēs, iestatīt heiristisko vērtību kā +bezgalību
             if computerWin:
                 return float('inf')
+            # Ja dators zaudēs, iestatīt heiristisko vērtību kā -bezgalību
             elif computerLoss:
                 return float('-inf')
+            # Ja būs neizšķirts, iestatīt heiristisko vērtību kā 0
             else:
                 return 0
 
+        heuristicValue = SCORE_DIFFERENCE_COEFFICIENT * (self.computerPoints - self.playerPoints)
+
+        # Noteikt cik daudz ir labi pāri un cik slikti pāri, jo vairāk labi pāri, jo lielāka iespēja,
+        # ka spēlētājs izvēlēsies labu pāri
         for i in range(len(self.setOfNumbers) - 1):
             if self.setOfNumbers[i] + self.setOfNumbers[i + 1] > 6:
                 goodPairs += 1
             else:
                 badPairs += 1
-            totalSum += self.setOfNumbers[i + 1]
 
-        heuristicValue = (SCORE_DIFFERENCE_COEFFICIENT * (self.computerPoints - self.playerPoints) +
-                GOOD_PAIR_COEFFICIENT * (goodPairs - badPairs) +
-                TOTAL_SUM_COEFFICIENT * totalSum)
+        if self.isComputerTurn():
+            heuristicValue += GOOD_PAIR_COEFFICIENT * (goodPairs - badPairs)
+        else:
+            heuristicValue -= GOOD_PAIR_COEFFICIENT * (goodPairs - badPairs)
 
+        # Ja ir palikuši tikai trīs skaitļi, ir tikai viens labs pāris un spēlētājs vai dators pagaidām uzvar,
+        # tad var teikt, ka spēlētājam vai datoram varētu būt garantēta uzvara
         if len(self.setOfNumbers) <= 3 and goodPairs == 1:
-            heuristicValue = heuristicValue + BENEFICIAL_ENDGAME_COEFFICIENT
+            if self.computerPoints > self.playerPoints and self.isComputerTurn():
+                heuristicValue = heuristicValue + BENEFICIAL_ENDGAME_COEFFICIENT
+            elif self.computerPoints < self.playerPoints and not self.isComputerTurn():
+                heuristicValue = heuristicValue + BENEFICIAL_ENDGAME_COEFFICIENT
 
         return heuristicValue
 
