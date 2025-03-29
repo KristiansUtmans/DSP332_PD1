@@ -10,16 +10,12 @@ GOOD_PAIR_COEFFICIENT = 0.5
 # Kopējā skaita koeficients
 TOTAL_SUM_COEFFICIENT = 0.1
 
-def generateNodeAddress(name):
-    lastDelimiter = name.rfind('.')
-
-    try:
-        lastAddress = int(name[lastDelimiter:])
-        newAddress = str(lastAddress + 1)
-        return newAddress
-
-    except ValueError:
-        return name[:lastDelimiter]
+# Realizē gājiena punktu izmaiņas nosacījumus
+def updatePoints(number, points):
+    if number < 6:
+        return number, points - 1
+    else:
+        return number - 6, points + 1
 
 # Koka virsotne
 class GameNode(NodeMixin):
@@ -35,6 +31,23 @@ class GameNode(NodeMixin):
         self.computerPoints = computerPoints
         self.computerTurn = computerTurn
         self.parent = parent
+
+    def evaluate_node(self):
+        # Heiristiskā novērtējuma funkcija
+        goodPairs = 0
+        badPairs = 0
+        totalSum = self.setOfNumbers[0]
+
+        for i in range(len(self.setOfNumbers) - 1):
+            if self.setOfNumbers[i] + self.setOfNumbers[i + 1] > 6:
+                goodPairs += 1
+            else:
+                badPairs += 1
+            totalSum += self.setOfNumbers[i + 1]
+
+        return (SCORE_DIFFERENCE_COEFFICIENT * (self.computerPoints - self.playerPoints) +
+                GOOD_PAIR_COEFFICIENT * (goodPairs - badPairs) +
+                TOTAL_SUM_COEFFICIENT * totalSum)
 
     def getName(self):
         return self.name
@@ -60,9 +73,6 @@ class GameTree:
     def getRoot(self):
         return self.root
 
-    def getDepth(self):
-        return self.depth
-
     # Koka ģenerēšana līdz noteiktam dziļumam
     def generateGameTree(self, max_depth):
         print("Generating tree")
@@ -83,55 +93,34 @@ class GameTree:
             currentComputerPoints = currentNode.getComputerPoints()
             computerTurn = currentNode.isComputerTurn()
             latestName = currentNode.getName()
-            if computerTurn:
-                currentComputerPoints += 1
-            else:
-                currentPlayerPoints += 1
 
             # Simulē iespējamos spēles gājienus - Iterē pāri katram ciparam spēles virknē, ņemts nākošais, saskaita un pievieno spēles kokam
             for i in range(len(currentNumbers) - 1):
                 currentNumber = currentNumbers[i]
                 nextNumber = currentNumbers[i + 1]
 
-                newNumber = currentNumber + nextNumber
-                if newNumber > 6:
-                    newNumber = newNumber - 6
+                # Piešķir jaunā skaitļu virknes skaitļa vērtību un
+                # Piešķir vai atņem attiecīgajam spēlētājam punktus atkarībā no skaitļu summas rezultāta
+                if computerTurn:
+                    newNumber, newComputerPoints = updatePoints(currentNumber + nextNumber, currentComputerPoints)
+                    newPlayerPoints = currentPlayerPoints
+                else:
+                    newNumber, newPlayerPoints = updatePoints(currentNumber + nextNumber, currentPlayerPoints)
+                    newComputerPoints = currentComputerPoints
 
                 # Tikai priekš šīs virsotnes izdzēš apskatāmo ciparu un nākamo ciparu, to vietā ieliekot to summu
                 newSetOfNumbers = currentNumbers.copy()
                 newSetOfNumbers[i + 1] = newNumber
                 newSetOfNumbers.pop(i)
 
-
                 newName = f"{latestName}.{i}"
 
                 # Uzģenerē jauno virsotni. Iestatot tās vecāku, nav nepieciešams to saglabāt
-                newNode = GameNode(newName, newSetOfNumbers, currentPlayerPoints, currentComputerPoints, not computerTurn,
+                newNode = GameNode(newName, newSetOfNumbers, newPlayerPoints, newComputerPoints, not computerTurn,
                          parent=currentNode)
 
                 # Pievienot virsotni deka beigās, labajā pusē, lai vēlāk caurskatītu tālāk
-                queue.append((newNode, currentDepth + 1))
-
-def evaluate_node(node):
-    # Heiristiskā novērtēšanas funkcija
-
-    playerScore = node.getPlayerPoints()
-    computerScore = node.getComputerPoints()
-    setOfNumbers = node.getSetOfNumbers().copy()
-    goodPairs = 0
-    badPairs = 0
-    totalSum = setOfNumbers[0]
-
-    for i in range(len(setOfNumbers) - 1):
-        if setOfNumbers[i] + setOfNumbers[i + 1] > 6:
-            goodPairs += 1
-        else:
-            badPairs += 1
-        totalSum += setOfNumbers[i + 1]
-
-    return (SCORE_DIFFERENCE_COEFFICIENT * (computerScore - playerScore) +
-            GOOD_PAIR_COEFFICIENT * (goodPairs - badPairs) +
-            TOTAL_SUM_COEFFICIENT * totalSum)
+                queue.append([newNode, currentDepth + 1])
 
     # Implement min-max and alpha-beta algorithms, anytree - PostOrderIter() can help
     # def generateWithMiniMax(self):
@@ -152,7 +141,7 @@ tree = GameTree(startNode)
 
 tree.generateGameTree(2)
 print(RenderTree(startNode, style=ContRoundStyle()).by_attr(attrname="setOfNumbers"))
-print(evaluate_node(tree.getRoot().children[0].children[0]))
+print(tree.getRoot().children[0].evaluate_node())
 
 # print(RenderTree(startNode, style=AsciiStyle()).by_attr())
 #
