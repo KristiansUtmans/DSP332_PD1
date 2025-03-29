@@ -1,4 +1,4 @@
-from anytree import Node, RenderTree, AsciiStyle, ContRoundStyle, NodeMixin
+from anytree import RenderTree, ContRoundStyle, NodeMixin
 from collections import deque
 
 # Heiristiskās funkcijas koeficienti
@@ -19,7 +19,7 @@ def updatePoints(number, points):
 
 # Koka virsotne
 class GameNode(NodeMixin):
-    def __init__(self, name, setOfNumbers = None, playerPoints = 0, computerPoints = 0, computerTurn = True, parent = None, **kwargs):
+    def __init__(self, name, setOfNumbers = None, playerPoints = 0, computerPoints = 0, computerTurn = True, parent = None):
         super().__init__()
 
         if setOfNumbers is None:
@@ -64,7 +64,7 @@ class GameNode(NodeMixin):
     def isComputerTurn(self):
         return self.computerTurn
 
-# Spēles koks, kad depth <= 15 - 7 -> ģenerēt pilnu koku
+# TODO: Spēles koks, kad depth <= 15 - 7 -> ģenerēt pilnu koku
 class GameTree:
     # Saknes virsotne arī darbojas
     def __init__(self, root = GameNode("1", parent=None)):
