@@ -24,12 +24,12 @@ name - Simbolu virkne, virsotnes nosaukums, tiek izmantota universālā adrešu 
 playerPoints - Skaitlis, Spēlētāja punkti šajā koka virsotnē
 computerPoints - Skaitlis, Datora punkti šajā koka virsotnē
 computerTurn - Būla vērtība, Vai šajā virsotnē ir datora gājiens
-value - Skaitlis, heiristiskā virsotnes vērtība
+heuristicValue - Skaitlis, heiristiskā virsotnes vērtība
 parent - Atsauce uz vecāka virsotni
 NodeMixin parametri, to ietvarā: children - Kopums ar virsotnēm, kas ir šīs virsotnes bērni
 """
 class GameNode(NodeMixin):
-    def __init__(self, name, setOfNumbers = None, computerTurn = True, playerPoints = 0, computerPoints = 0, value = None, parent = None):
+    def __init__(self, name, setOfNumbers = None, computerTurn = True, playerPoints = 0, computerPoints = 0, heuristicValue = None, parent = None):
         super().__init__()
 
         if setOfNumbers is None:
@@ -41,7 +41,7 @@ class GameNode(NodeMixin):
         self.computerPoints = computerPoints
         self.computerTurn = computerTurn
         self.parent = parent
-        self.value = value
+        self.heuristicValue = heuristicValue
 
     def evaluate_node(self):
         # Heiristiskā novērtējuma funkcija
@@ -79,11 +79,11 @@ class GameNode(NodeMixin):
 
         # Ja ir palikuši tikai trīs skaitļi, ir tikai viens labs pāris un spēlētājs vai dators pagaidām uzvar,
         # tad var teikt, ka spēlētājam vai datoram varētu būt garantēta uzvara
-        if len(self.setOfNumbers) <= 3 and goodPairs == 1:
+        if len(self.setOfNumbers) <= 3 and goodPairs >= 1:
             if self.computerPoints > self.playerPoints and self.isComputerTurn():
                 heuristicValue = heuristicValue + BENEFICIAL_ENDGAME_COEFFICIENT
             elif self.computerPoints < self.playerPoints and not self.isComputerTurn():
-                heuristicValue = heuristicValue + BENEFICIAL_ENDGAME_COEFFICIENT
+                heuristicValue = heuristicValue - BENEFICIAL_ENDGAME_COEFFICIENT
 
         return heuristicValue
 
@@ -91,10 +91,10 @@ class GameNode(NodeMixin):
         return self.name
 
     def getValue(self):
-        return self.value
+        return self.heuristicValue
 
-    def setValue(self, value):
-        self.value = value
+    def setValue(self, heuristicValue):
+        self.heuristicValue = heuristicValue
 
     def getSetOfNumbers(self):
         return self.setOfNumbers
@@ -116,8 +116,8 @@ class GameNode(NodeMixin):
         # Ja ir sasniegts strupceļš vai maksimālais dziļums,
         # tad tiek noteikta virsotnes vērtība izmantojot heiristisko funkciju
         if depth == 0 or self.isEndOfGame():
-            self.value = self.evaluate_node()
-            return self.value
+            self.heuristicValue = self.evaluate_node()
+            return self.heuristicValue
 
         # Ja spēlētājs ir maksimizētājs, tiek dabūta maksimālā heiristiskā vērtība
         if maximizingPlayer:
@@ -144,8 +144,8 @@ class GameNode(NodeMixin):
         # Ja ir sasniegts strupceļš vai maksimālais dziļums,
         # tad tiek noteikta virsotnes vērtība izmantojot heiristisko funkciju
         if depth == 0 or self.isEndOfGame():
-            self.value = self.evaluate_node()
-            return self.value
+            self.heuristicValue = self.evaluate_node()
+            return self.heuristicValue
 
         # Ja spēlētājs ir maksimizētājs, tiek dabūta maksimālā heiristiskā vērtība
         if maximizingPlayer:
@@ -156,7 +156,7 @@ class GameNode(NodeMixin):
                 alpha = max(alpha, nodeValue)
                 if beta <= alpha:
                     break
-            self.value = maxNodeValue
+            self.heuristicValue = maxNodeValue
             return maxNodeValue
 
         # Ja spēlētājs ir minimizētājs, tiek dabūta maksimālā heiristiskā vērtība
@@ -168,7 +168,7 @@ class GameNode(NodeMixin):
                 beta = min(beta, nodeValue)
                 if beta <= alpha:
                     break
-            self.value = minNodeValue
+            self.heuristicValue = minNodeValue
             return minNodeValue
 
 
@@ -241,30 +241,19 @@ class GameTree:
     def getBestMoveWithBestValue(self, bestValue):
         return next((childNode.getSetOfNumbers() for childNode in self.root.children if childNode.getValue() == bestValue), None)
 
-    # Pārlūko koka saknes tuvākās virsotnes un atgriež labākā gājiena(priekš datora) skaitļa virkni
-     def getBestMove(self):
-       bestMove = None
-       bestValue = float('-inf')
-      for childNode in self.root.children:
-        childValue = childNode.getValue()
-     
-         # Skip nodes with None value
-        if childValue is None:
-             continue
-         
-        if childValue > bestValue:
-             bestValue = childValue
-             bestMove = childNode
- 
-      # Handle the case where no best move was found
-      if bestMove is None:
-          if self.root.children:  # If there are children but none with good values
-              bestMove = self.root.children[0]  # Just pick the first one
-          else:
-              # If there are no children at all, return the current sequence
-              return self.root.getSetOfNumbers()
- 
-      return bestMove.getSetOfNumbers()
+    # Pārlūko koka saknes tuvākās virsotnes un atgriež labākā gājiena(priekš datora) skaitļa virkni, ja ir vairāki labākie, tad pēdējo labāko.
+    def getBestMove(self):
+        bestMove = None
+        bestValue = float('-inf')
+        for childNode in self.root.children:
+            childValue = childNode.getValue()
+             # Izlaist virsotnes bez heiristiskām vērtībām
+            if childValue is None:
+                 continue
+            if childNode.getValue() >= bestValue:
+                bestMove = childNode
+
+        return bestMove.getSetOfNumbers()
 
 startNode = GameNode("1", [1,2,3,4,5,6,5,3,2,1], True)
 tree = GameTree(startNode, 4)
@@ -275,6 +264,6 @@ tree.generateGameTree()
 
 print(tree.getBestMoveWithBestValue(tree.updateTreeWithMinMaxValues()))
 
-print(RenderTree(startNode, style=ContRoundStyle()).by_attr(attrname="value"))
+print(RenderTree(startNode, style=ContRoundStyle()).by_attr(attrname="heuristicValue"))
 
 print(tree.getBestMove())

@@ -1,5 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox
+
+from anytree import RenderTree, ContRoundStyle
+
 from gameTree import GameNode, GameTree  # Ja izmainās file nosaukums šo vajag update!!!!!
 import random
 
@@ -78,14 +81,16 @@ def computer_move():
     
     # Izmanto atbilstoši izvēlēto spēlētāja pārmeklēšanas algoritmu
     if algorithm_choice.get() == 1:  # Min-Max
-        best_value = game_tree.updateTreeWithMinMaxValues()
+        game_tree.updateTreeWithMinMaxValues()
     elif algorithm_choice.get() == 2:  # Alpha-Beta
-        best_value = game_tree.updateTreeWithAlphaBetaValues()
+        game_tree.updateTreeWithAlphaBetaValues()
     else:
         messagebox.showerror("Kļūda", "Nav izvēlēts pārmeklēšanas algoritms.")
         return
-    
-    # Dabū labāko gājienu priekš daotra 
+
+    print(RenderTree(game_tree.getRoot(), style=ContRoundStyle()).by_attr(attrname="heuristicValue"))
+
+    # Dabū labāko gājienu priekš daotra
     new_sequence = game_tree.getBestMove()
     
     if new_sequence:
