@@ -230,20 +230,24 @@ class GameTree:
                 # Pievienot virsotni deka beigās, labajā pusē, lai vēlāk caurskatītu tālāk
                 queue.append([newNode, currentDepth + 1])
 
+    # Atjauno koku ar min-max heiristiskām vērtībām, atgriež labāko vērtību, tad iterējot pāri saknes bērniem var izgūt to virsotni
     def updateTreeWithMinMaxValues(self):
-        self.root.minmax(self.maxDepth, self.root.isComputerTurn())
+        return self.root.minmax(self.maxDepth, self.root.isComputerTurn())
 
+    # Atjauno koku ar alfa-beta heiristiskām vērtībām, atgriež labāko vērtību, tad iterējot pāri saknes bērniem var izgūt to virsotni
     def updateTreeWithAlphaBetaValues(self):
-        self.root.alphaBeta(self.maxDepth, float('-inf'), float('inf'), self.root.isComputerTurn())
+        return self.root.alphaBeta(self.maxDepth, float('-inf'), float('inf'), self.root.isComputerTurn())
 
+    def getBestMoveWithBestValue(self, bestValue):
+        return next((childNode.getSetOfNumbers() for childNode in self.root.children if childNode.getValue() == bestValue), None)
 
     # Pārlūko koka saknes tuvākās virsotnes un atgriež labākā gājiena(priekš datora) skaitļa virkni
-    def getMinMaxBestMove(self):
+    def getBestMove(self):
         bestMove = None
         bestValue = float('-inf')
-        for child in self.root.children:
-            if child.getValue() > bestValue:
-                bestMove = child
+        for childNode in self.root.children:
+            if childNode.getValue() > bestValue:
+                bestMove = childNode
 
         return bestMove.getSetOfNumbers()
 
@@ -253,7 +257,9 @@ tree.generateGameTree()
 # print(RenderTree(startNode, style=ContRoundStyle()).by_attr(attrname="name"))
 # print(tree.getRoot().children[0].evaluate_node())
 # print(tree.getRoot().minmax(tree.maxDepth, tree.getRoot().isComputerTurn()))
-tree.updateTreeWithMinMaxValues()
+
+print(tree.getBestMoveWithBestValue(tree.updateTreeWithMinMaxValues()))
+
 print(RenderTree(startNode, style=ContRoundStyle()).by_attr(attrname="value"))
 
-print(tree.getMinMaxBestMove())
+print(tree.getBestMove())
