@@ -15,10 +15,9 @@ Mākslīgā intelekta pamati(1),24/25-P 1.praktiskais darbs
      - algoritma tips (Minimaksa vai Alfa-beta algoritms).
 3. Spēles sākumā ir dota ģenerētā skaitļu virkne un abu spēlētāju punktu skaits ir 0.
 4. Spēlētājs izpilda gājienus pēc kārtas. 
-   - Gājiena laikā spēlētājs var: 
-        saskaitīt skaitļu pāri (jebkurus divus skaitļus blakus viens otram) un summu ierakstīt saskaitīto skaitļu pāra vieta vietā:
-            - Ja summa ir lielāka par 6, tad pieskaita vienu punktu spēlētāja punktu skaitam un notiek aizvietošana: 7 = 1, 8 = 2, 9 = 3, 10 = 4, 11=5, 12=6
-            - Ja summa ir mazāka par 6, tad atņem vienu punktu no spēlētāja punktu skaita.
+   - Gājiena laikā spēlētājs var saskaitīt skaitļu pāri (jebkurus divus skaitļus blakus viens otram), summa tad tiek ierakstīta to vietā:
+     - Ja summa ir lielāka par 6, tad pieskaita vienu punktu spēlētāja punktu skaitam un notiek aizvietošana: 7 = 1, 8 = 2, 9 = 3, 10 = 4, 11=5, 12=6
+     - Ja summa ir mazāka par 6, tad atņem vienu punktu no spēlētāja punktu skaita.
      
 
 5. Spēle beidzas, kad skaitļu virknē paliek viens skaitlis. Uzvar spēlētājs, kam ir vairāk punktu. Spēlētājam tiek dota iespēja spēlēt atkal - atgriežas uz 2.soli.
