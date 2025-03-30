@@ -68,7 +68,7 @@ def computer_move():
     search_depth = int(depth_input.get())  
 
    
-    # Create a GameNode with the generated sequence
+    # Izveido GameNode ar ģenerēto virkni
     start_node = GameNode("1", current_sequence, True, player_score, opponent_score)
     
     # Uztaisa un ģenerē spēles koku
