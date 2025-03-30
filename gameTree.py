@@ -242,14 +242,29 @@ class GameTree:
         return next((childNode.getSetOfNumbers() for childNode in self.root.children if childNode.getValue() == bestValue), None)
 
     # Pārlūko koka saknes tuvākās virsotnes un atgriež labākā gājiena(priekš datora) skaitļa virkni
-    def getBestMove(self):
-        bestMove = None
-        bestValue = float('-inf')
-        for childNode in self.root.children:
-            if childNode.getValue() > bestValue:
-                bestMove = childNode
-
-        return bestMove.getSetOfNumbers()
+     def getBestMove(self):
+       bestMove = None
+       bestValue = float('-inf')
+      for childNode in self.root.children:
+        childValue = childNode.getValue()
+     
+         # Skip nodes with None value
+        if childValue is None:
+             continue
+         
+        if childValue > bestValue:
+             bestValue = childValue
+             bestMove = childNode
+ 
+      # Handle the case where no best move was found
+      if bestMove is None:
+          if self.root.children:  # If there are children but none with good values
+              bestMove = self.root.children[0]  # Just pick the first one
+          else:
+              # If there are no children at all, return the current sequence
+              return self.root.getSetOfNumbers()
+ 
+      return bestMove.getSetOfNumbers()
 
 startNode = GameNode("1", [1,2,3,4,5,6,5,3,2,1], True)
 tree = GameTree(startNode, 4)
