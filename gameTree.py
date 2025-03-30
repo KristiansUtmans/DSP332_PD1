@@ -17,6 +17,13 @@ def updatePoints(number, points):
     else:
         return number - 6, points + 1
 
+# Atrod kurus skaitļus gājienā saskaita
+def findTurnAddedNumbers(currentTurnSetOfNumbers, nextTurnSetOfNumbers):
+    for i in range(len(nextTurnSetOfNumbers)):
+        if nextTurnSetOfNumbers[i] != currentTurnSetOfNumbers[i]:
+            return i, i + 1
+    return None
+
 """ 
 Koka virsotne, tiek mantota no NodeMixin
 params:
@@ -90,10 +97,10 @@ class GameNode(NodeMixin):
     def getName(self):
         return self.name
 
-    def getValue(self):
+    def getHeuristicValue(self):
         return self.heuristicValue
 
-    def setValue(self, heuristicValue):
+    def setHeuristicValue(self, heuristicValue):
         self.heuristicValue = heuristicValue
 
     def getSetOfNumbers(self):
@@ -125,7 +132,7 @@ class GameNode(NodeMixin):
             for childNode in self.children:
                 nodeValue = childNode.minmax(depth - 1, False)
                 maxNodeValue = max(maxNodeValue, nodeValue)
-            self.setValue(maxNodeValue)
+            self.setHeuristicValue(maxNodeValue)
             return maxNodeValue
 
         # Ja spēlētājs ir minimizētājs, tiek dabūta minimālā heiristiskā vērtība
@@ -134,7 +141,7 @@ class GameNode(NodeMixin):
             for childNode in self.children:
                 nodeValue = childNode.minmax(depth - 1, True)
                 minNodeValue = min(minNodeValue, nodeValue)
-            self.setValue(minNodeValue)
+            self.setHeuristicValue(minNodeValue)
             return minNodeValue
 
     # Alfa-Beta algoritms:
@@ -239,21 +246,26 @@ class GameTree:
         return self.root.alphaBeta(self.maxDepth, float('-inf'), float('inf'), self.root.isComputerTurn())
 
     def getBestMoveWithBestValue(self, bestValue):
-        return next((childNode.getSetOfNumbers() for childNode in self.root.children if childNode.getValue() == bestValue), None)
+        return next((childNode.getSetOfNumbers() for childNode in self.root.children if childNode.getHeuristicValue() == bestValue), None)
 
     # Pārlūko koka saknes tuvākās virsotnes un atgriež labākā gājiena(priekš datora) skaitļa virkni, ja ir vairāki labākie, tad pēdējo labāko.
     def getBestMove(self):
         bestMove = None
         bestValue = float('-inf')
         for childNode in self.root.children:
-            childValue = childNode.getValue()
+            childValue = childNode.getHeuristicValue()
              # Izlaist virsotnes bez heiristiskām vērtībām
             if childValue is None:
                  continue
-            if childNode.getValue() >= bestValue:
-                bestMove = childNode
 
-        return bestMove.getSetOfNumbers()
+            if childNode.getHeuristicValue() >= bestValue:
+                bestMove = childNode
+                bestValue = childNode.getHeuristicValue()
+
+        # Iegūt ciparu indeksus kurus jāsaskaita, lai veiktu šo gājienu
+        numbersToAdd = findTurnAddedNumbers(self.root.getSetOfNumbers(), bestMove.getSetOfNumbers())
+
+        return bestMove.getSetOfNumbers(), numbersToAdd
 
 startNode = GameNode("1", [1,2,3,4,5,6,5,3,2,1], True)
 tree = GameTree(startNode, 4)

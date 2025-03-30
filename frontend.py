@@ -91,10 +91,11 @@ def computer_move():
     print(RenderTree(game_tree.getRoot(), style=ContRoundStyle()).by_attr(attrname="heuristicValue"))
 
     # Dabū labāko gājienu priekš daotra
-    new_sequence = game_tree.getBestMove()
+    new_sequence, move_numbers_to_add = game_tree.getBestMove()
     
     if new_sequence:
         # Atjauno spēles gaitu
+        print("Veiktais gājiens, ciparu indeksi masīvā: " + str(move_numbers_to_add[0]) + " " + str(move_numbers_to_add[1]))
         opponent_score += 1  # Pieskaita datoram punktu par gājiena veikšanu
         current_sequence = new_sequence
         turn = "player"
