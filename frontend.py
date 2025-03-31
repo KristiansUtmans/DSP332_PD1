@@ -6,6 +6,10 @@ from anytree import RenderTree, ContRoundStyle
 from gameTree import GameNode, GameTree  # Ja izmainās file nosaukums šo vajag update!!!!!
 import random
 
+global numbersToAdd, opponentMoveValues # Izveido globalo mainīgo priekš datora viektā gājiena izvades ekrānā
+numbersToAdd = None 
+opponentMoveValues = None
+
 def show_rules_page():
     input_frame.pack_forget()
     game_frame.pack_forget()
@@ -33,7 +37,6 @@ def show_game_page():
     final_frame.pack_forget()
     algorithm_frame.pack_forget()
     game_frame.pack(pady=20)
-
     # Notīra vecās pogas
     for widget in sequence_frame.winfo_children():
         widget.destroy()
@@ -50,8 +53,20 @@ def show_game_page():
             btn.bind("<Enter>", on_enter)
             btn.bind("<Leave>", on_leave)
             sequence_buttons.append(btn)
-    # Parāda šobrīdējos rezultātus
+            # Pārbauda kura gājiens in disablē iespēju spiest pogas attiecīgi pēc tā
+            if turn == "opponent":
+             set_buttons_state("disabled")
+            else:
+             set_buttons_state("normal")
+
+    # Parāda šobrīdējos rezultātus un gājienus
     score_label.config(text=f"Player: {player_score}  |  Opponent: {opponent_score}")
+
+    # Izvada datora gājienu ekrānā ja tāds ir veikts
+    if opponentMoveValues:
+        move_label.config(text=f"Opponent move: {opponentMoveValues[0]} + {opponentMoveValues[1]}")
+    else:
+        move_label.config(text="Opponent move: None")
     
 def show_final_page():
     rules_frame.pack_forget()
@@ -60,9 +75,12 @@ def show_final_page():
     algorithm_frame.pack_forget()
     final_frame.pack(pady=20)
 
+def set_buttons_state(state):  # Funkcija priekš iespējas pogu nospiešanu aizliegt gājiena laikā
+    for btn in sequence_buttons:
+        btn["state"] = state
 
 def computer_move():
-    global current_sequence, player_score, opponent_score, turn, user_input
+    global current_sequence, player_score, opponent_score, turn, user_input, numbersToAdd, opponentMoveValues
     
     if len(current_sequence) <= 1:
         return  # Pārtrauc spēli ja virkne ir <=1
@@ -77,6 +95,7 @@ def computer_move():
     # Uztaisa un ģenerē spēles koku
     game_tree = GameTree(start_node, search_depth)
     game_tree.generateGameTree()
+    
 
     
     # Izmanto atbilstoši izvēlēto spēlētāja pārmeklēšanas algoritmu
@@ -96,10 +115,13 @@ def computer_move():
     if new_sequence:
         # Atjauno spēles gaitu
         print("Veiktais gājiens, ciparu indeksi masīvā: " + str(move_numbers_to_add[0]) + " " + str(move_numbers_to_add[1]))
+        numbersToAdd = move_numbers_to_add # Izvada datora gājienu ekrānā
+        idx1, idx2 = move_numbers_to_add
+        opponentMoveValues = (current_sequence[idx1], current_sequence[idx2])
         opponent_score += 1  # Pieskaita datoram punktu par gājiena veikšanu
         current_sequence = new_sequence
         turn = "player"
-        
+        set_buttons_state("normal")
         show_game_page()
         
         # Pārbaude spēles beigas
@@ -115,11 +137,11 @@ def handle_button_click(index):
     if len(selected_indices) < 2:
         selected_indices.append(index)
         sequence_buttons[index].config(bg="yellow")
-        #selected_buttons.add(sequence_buttons[index])  # Saglabā atzīmētās pogas
+        selected_buttons.add(sequence_buttons[index])  # Saglabā atzīmētās pogas
 
     if len(selected_indices) == 2:
         i1, i2 = selected_indices
-        if abs(i1 - i2) == 1 and (min(i1, i2) % 2 == 0):  # Pārliecinās lai būtu atzīmēti pāri būtu 1-2, 3-4, 5-6,...
+        if abs(i1 - i2) == 1:  # Pārliecinās lai būtu atzīmēti blakus pāri
             num1 = current_sequence[i1]
             num2 = current_sequence[i2]
             combined_value = num1 + num2 if num1 + num2 <= 6 else (num1 + num2 - 6)
@@ -132,34 +154,40 @@ def handle_button_click(index):
 
             turn = "opponent" if turn == "player" else "player"
             selected_indices.clear()
-            #selected_buttons.clear()  # Atzīmēto pogu notīrīšana
+            selected_buttons.clear()  # Atzīmēto pogu notīrīšana
             show_game_page()
 
             if len(current_sequence) == 1:
                 check_game_end()  # Izsauc end game fukciju
             elif turn == "opponent":  # Datora gājiens pēc aizkaves
+                set_buttons_state("disabled")  # Disablē iespēju nospiest pogas kāmēr dators veic savu gājienu
                 window.after(500, computer_move)
         else:
-            messagebox.showinfo("Nepareizs pāris", "Lūdzu izvēlaties pārus (1-2, 3-4, 5-6,...).")
+            messagebox.showinfo("Nepareizs pāris", "Lūdzu izvēlaties pārus kas atrodas blakus(1-2;2-3;3-4;...) .")
             selected_indices.clear()
-            #selected_buttons.clear()  # Atzīmēto pogu notīrīšana
+            selected_buttons.clear()  # Atzīmēto pogu notīrīšana
             show_game_page()
-
+selected_buttons = set()
 
 # Funkcija lai pārbaudītu spēles beigas 
 def check_game_end():
     if len(current_sequence) == 1:
-        winner = "Player" if player_score > opponent_score else "Opponent"
-        messagebox.showinfo("Game Over", f"Game Over!\n{winner} wins!")
+        if player_score > opponent_score:
+            winner = "Player wins!"
+        elif player_score == opponent_score:
+            winner = "Draw"
+        else:winner = "Opponent wins!" 
+        messagebox.showinfo("Game Over", f"Game Over!\n {winner}")
+        
         score_label2.config(text=f"Player: {player_score}  |  Opponent: {opponent_score}")
         show_final_page()
 
 def on_enter(e):
-  #if e.widget not in selected_buttons:
+  if e.widget not in selected_buttons: # Lai nenotīra iezīmēto pogu
     e.widget.config(bg="lightblue")  # Krāsa uz pogas hover
 
 def on_leave(e):
- # if e.widget not in selected_buttons:
+  if e.widget not in selected_buttons: # Lai nenotīra iezīmēto pogu
     e.widget.config(bg="SystemButtonFace")  # Reset pogas krāsai kad nav hover  
 
 def submit_algorithm_settings():
@@ -168,12 +196,12 @@ def submit_algorithm_settings():
         user_value = int(user_input.get())
         if user_value > 18:
             if depth > 3:
-                messagebox.showerror("Virknēm virs 18, maksimālais dziļums 3.")
+                messagebox.showerror("Kļūda", "Virknēm virs 18, maksimālais dziļums 3.")
           
                 return
         else:
             if depth > 5:
-                messagebox.showerror("Virknēm 18 vai mazāk, maksimālais dziļums 5.")
+                messagebox.showerror("Kļūda", "Virknēm 18 vai mazāk, maksimālais dziļums 5.")
                 return
 
         if algorithm_choice.get() == -1:
@@ -208,7 +236,7 @@ def submit_input():
             
             # Ģenerē random spēles virkni
             global current_sequence
-            current_sequence = [random.randint(1, 6) for _ in range(user_value)]  # Generate random sequence
+            current_sequence = [random.randint(1, 6) for _ in range(user_value)]  # Ģenerē random virkni no 1-6
             print(f"Initial sequence: {current_sequence}")  # Izvada random virki
             
             
@@ -352,6 +380,9 @@ sequence_buttons = []  # Saglabā atzīmētās pogas priekš spēles gaitas atja
 # Rezultātu parādīšana ekrānā
 score_label = tk.Label(game_frame, text="Player: 0  |  Opponent: 0", font=("Arial", 16))
 score_label.pack(pady=10)
+
+move_label = tk.Label(game_frame, text="Opponent move: ", font=("Arial", 16))
+move_label.pack(pady=10)
 
 # ----------Fināla lapa(Izvadīti rezultāti un atkārtot spēli)----------
 final_frame = tk.Frame(window)
