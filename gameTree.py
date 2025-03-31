@@ -1,5 +1,6 @@
-from anytree import RenderTree, ContRoundStyle, NodeMixin
+from anytree import RenderTree, ContRoundStyle, NodeMixin, PreOrderIter
 from collections import deque
+import time
 
 # Heiristiskās funkcijas koeficienti
 
@@ -32,6 +33,7 @@ playerPoints - Skaitlis, Spēlētāja punkti šajā koka virsotnē
 computerPoints - Skaitlis, Datora punkti šajā koka virsotnē
 computerTurn - Būla vērtība, Vai šajā virsotnē ir datora gājiens
 heuristicValue - Skaitlis, heiristiskā virsotnes vērtība
+nodeViewed - Būla vērtība, vai virsotne tika apskatīta
 parent - Atsauce uz vecāka virsotni
 NodeMixin parametri, to ietvarā: children - Kopums ar virsotnēm, kas ir šīs virsotnes bērni
 """
@@ -158,7 +160,7 @@ class GameNode(NodeMixin):
         if maximizingPlayer:
             maxNodeValue = float('-inf')
             for childGameNode in self.children:
-                nodeValue = childGameNode.minmax(depth - 1, False)
+                nodeValue = childGameNode.alphaBeta(depth - 1, alpha, beta, False)
                 maxNodeValue = max(maxNodeValue, nodeValue)
                 alpha = max(alpha, nodeValue)
                 if beta <= alpha:
@@ -170,7 +172,7 @@ class GameNode(NodeMixin):
         else:
             minNodeValue = float('inf')
             for childGameNode in self.children:
-                nodeValue = childGameNode.minmax(depth - 1, True)
+                nodeValue = childGameNode.alphaBeta(depth - 1, alpha, beta, True)
                 minNodeValue = min(minNodeValue, nodeValue)
                 beta = min(beta, nodeValue)
                 if beta <= alpha:
@@ -239,14 +241,33 @@ class GameTree:
 
     # Atjauno koku ar min-max heiristiskām vērtībām, atgriež labāko vērtību, tad iterējot pāri saknes bērniem var izgūt to virsotni
     def updateTreeWithMinMaxValues(self):
-        return self.root.minmax(self.maxDepth, self.root.isComputerTurn())
+        startTime = time.perf_counter()
+        self.root.minmax(self.maxDepth, self.root.isComputerTurn())
+        endTime = time.perf_counter()
+        viewedNodeCount = self.getValuedNodeCount()
+
+        runTime = endTime - startTime
+
+        return runTime, viewedNodeCount
 
     # Atjauno koku ar alfa-beta heiristiskām vērtībām, atgriež labāko vērtību, tad iterējot pāri saknes bērniem var izgūt to virsotni
     def updateTreeWithAlphaBetaValues(self):
-        return self.root.alphaBeta(self.maxDepth, float('-inf'), float('inf'), self.root.isComputerTurn())
+        startTime = time.perf_counter()
+        self.root.alphaBeta(self.maxDepth, float('-inf'), float('inf'), self.root.isComputerTurn())
+        endTime = time.perf_counter()
+        viewedNodeCount = self.getValuedNodeCount()
 
-    def getBestMoveWithBestValue(self, bestValue):
-        return next((childNode.getSetOfNumbers() for childNode in self.root.children if childNode.getHeuristicValue() == bestValue), None)
+        runTime = endTime - startTime
+
+        return runTime, viewedNodeCount
+
+    def getValuedNodeCount(self):
+        count = 0
+
+        for node in PreOrderIter(self.root):
+            if node.heuristicValue is not None:
+                count += 1
+        return count
 
     # Pārlūko koka saknes tuvākās virsotnes un atgriež labākā gājiena(priekš datora) skaitļa virkni, ja ir vairāki labākie, tad pēdējo labāko.
     def getBestMove(self):
@@ -267,15 +288,14 @@ class GameTree:
 
         return bestMove, numbersToAdd
 
-startNode = GameNode("1", [1,2,3,4,5,6,5,3,2,1], True)
-tree = GameTree(startNode, 4)
-tree.generateGameTree()
+# startNode = GameNode("1", [1,2,3,4,5,6,5,3,2,1,5], True)
+# tree = GameTree(startNode, 6)
+# tree.generateGameTree()
 # print(RenderTree(startNode, style=ContRoundStyle()).by_attr(attrname="name"))
 # print(tree.getRoot().children[0].evaluate_node())
-# print(tree.getRoot().minmax(tree.maxDepth, tree.getRoot().isComputerTurn()))
+# print(tree.updateTreeWithAlphaBetaValues())
+# print(len(list(PreOrderIter(tree.root))))
 
-print(tree.getBestMoveWithBestValue(tree.updateTreeWithMinMaxValues()))
+# print(RenderTree(startNode, style=ContRoundStyle()).by_attr(attrname="heuristicValue"))
 
-print(RenderTree(startNode, style=ContRoundStyle()).by_attr(attrname="heuristicValue"))
-
-print(tree.getBestMove())
+# print(tree.getBestMove())

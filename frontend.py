@@ -1,9 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
-
 from anytree import RenderTree, ContRoundStyle
-
-from gameTree import GameNode, GameTree  # Ja izmainās file nosaukums šo vajag update!!!!!
+from gameTree import GameNode, GameTree
 import random
 
 global numbersToAdd, opponentMoveValues # Izveido globalo mainīgo priekš datora viektā gājiena izvades ekrānā
@@ -86,7 +84,7 @@ def computer_move():
         return  # Pārtrauc spēli ja virkne ir <=1
         
     # No spēlētāja ievadītā dabū algoritma parmeklēšanas dziļumu
-    search_depth = int(depth_input.get())  
+    search_depth = int(depth_input.get())
 
    
     # Izveido GameNode ar ģenerēto virkni
@@ -100,14 +98,16 @@ def computer_move():
     
     # Izmanto atbilstoši izvēlēto spēlētāja pārmeklēšanas algoritmu
     if algorithm_choice.get() == 1:  # Min-Max
-        game_tree.updateTreeWithMinMaxValues()
+        runTime, nodeCount = game_tree.updateTreeWithMinMaxValues()
     elif algorithm_choice.get() == 2:  # Alpha-Beta
-        game_tree.updateTreeWithAlphaBetaValues()
+        runTime, nodeCount = game_tree.updateTreeWithAlphaBetaValues()
     else:
         messagebox.showerror("Kļūda", "Nav izvēlēts pārmeklēšanas algoritms.")
         return
 
     print(RenderTree(game_tree.getRoot(), style=ContRoundStyle()).by_attr(attrname="heuristicValue"))
+    print("Algoritms darbojās: " + str(runTime) + " sekundes")
+    print("Virsotnes tika apskatītas: " + str(nodeCount) + " reizes")
 
     # Dabū labāko gājienu priekš datora
     best_move, move_numbers_to_add = game_tree.getBestMove()
@@ -201,20 +201,27 @@ def submit_algorithm_settings():
     try:
         depth = int(depth_input.get())
         user_value = int(user_input.get())
+        algorithm = algorithm_choice.get()
+
+        if algorithm == -1:
+            messagebox.showerror("Kļūda", "Nav izvēlēts algoritms")
+            algorithm_frame.pack(pady=20)
+            return
+
         if user_value > 18:
-            if depth > 3:
-                messagebox.showerror("Kļūda", "Virknēm virs 18, maksimālais dziļums 3.")
-          
-                return
-        else:
-            if depth > 5:
-                messagebox.showerror("Kļūda", "Virknēm 18 vai mazāk, maksimālais dziļums 5.")
+            if depth > 5 and algorithm == 1:
+                messagebox.showerror("Kļūda", "Virknēm virs 18, min-max maksimālais dziļums 4.")
                 return
 
-        if algorithm_choice.get() == -1:
-               
-                messagebox.showerror("Kļūda", "Nav izvēlēts algoritms")
-                algorithm_frame.pack(pady=20)
+            elif depth > 10 and algorithm == 2:
+                messagebox.showerror("Kļūda", "Virknēm virs 18, alpha-beta maksimālais dziļums 8.")
+        else:
+            if depth > 10 and algorithm == 1:
+                messagebox.showerror("Kļūda", "Virknēm 18 vai mazāk, min-max maksimālais dziļums 6.")
+                return
+
+            elif depth > 20 and algorithm == 2:
+                messagebox.showerror("Kļūda", "Virknēm 18 vai mazāk, alpha-beta maksimālais dziļums 10.")
                 return
 
         show_game_page() 
