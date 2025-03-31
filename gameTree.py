@@ -13,9 +13,9 @@ BENEFICIAL_ENDGAME_COEFFICIENT = 15
 # Realizē gājiena punktu izmaiņas nosacījumus
 def updatePoints(number, points):
     if number < 6:
-        return number, points - 1
+        return number, points + 1
     else:
-        return number - 6, points + 1
+        return number - 6, points - 1
 
 # Atrod kurus skaitļus gājienā saskaita
 def findTurnAddedNumbers(currentTurnSetOfNumbers, nextTurnSetOfNumbers):
@@ -265,7 +265,7 @@ class GameTree:
         # Iegūt ciparu indeksus kurus jāsaskaita, lai veiktu šo gājienu
         numbersToAdd = findTurnAddedNumbers(self.root.getSetOfNumbers(), bestMove.getSetOfNumbers())
 
-        return bestMove.getSetOfNumbers(), numbersToAdd
+        return bestMove, numbersToAdd
 
 startNode = GameNode("1", [1,2,3,4,5,6,5,3,2,1], True)
 tree = GameTree(startNode, 4)

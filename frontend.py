@@ -109,16 +109,17 @@ def computer_move():
 
     print(RenderTree(game_tree.getRoot(), style=ContRoundStyle()).by_attr(attrname="heuristicValue"))
 
-    # Dabū labāko gājienu priekš daotra
-    new_sequence, move_numbers_to_add = game_tree.getBestMove()
+    # Dabū labāko gājienu priekš datora
+    best_move, move_numbers_to_add = game_tree.getBestMove()
     
-    if new_sequence:
+    if best_move:
+        new_sequence = best_move.getSetOfNumbers()
         # Atjauno spēles gaitu
         print("Veiktais gājiens, ciparu indeksi masīvā: " + str(move_numbers_to_add[0]) + " " + str(move_numbers_to_add[1]))
         numbersToAdd = move_numbers_to_add # Izvada datora gājienu ekrānā
         idx1, idx2 = move_numbers_to_add
         opponentMoveValues = (current_sequence[idx1], current_sequence[idx2])
-        opponent_score += 1  # Pieskaita datoram punktu par gājiena veikšanu
+        opponent_score = best_move.getComputerPoints()  # Pieskaita datoram punktu par gājiena veikšanu
         current_sequence = new_sequence
         turn = "player"
         set_buttons_state("normal")
@@ -148,9 +149,15 @@ def handle_button_click(index):
             current_sequence = current_sequence[:min(i1, i2)] + [combined_value] + current_sequence[max(i1, i2) + 1:]
 
             if turn == "player":
-                player_score += 1
+                if (num1 + num2) <= 6:
+                    player_score += 1
+                else:
+                    player_score -= 1
             else:
-                opponent_score += 1
+                if (num1 + num2) <= 6:
+                    opponent_score += 1
+                else:
+                    opponent_score -= 1
 
             turn = "opponent" if turn == "player" else "player"
             selected_indices.clear()
@@ -280,13 +287,11 @@ rules_text = """Spēles noteikumi:
 2. Izvēlies, kurš spēlē pirmais — spēlētājs vai dators.
 3. Spēles sākumā ir dota ģenerētā skaitļu virkne.Spēlētāji izpilda gājienus pēc kārtas.
    Katram spēlētājam ir 0 punktu. 
-   Gājiena laikā spēlētājs var:  
-        1.askaitīt skaitļu pāri (pirmo ar otro, trešo ar ceturto, piekto ar sesto)
-            un summu ierakstīt saskaitīto skaitļu pāra vieta vietā 
-            (ja summa ir lielāka par 6, tad notiek aizvietošanas: 7 = 1, 8 = 2, 9 = 3, 10 = 4, 11=5, 12=6),
-            kā arī pieskaitīt savam punktu skaitam 1 punktu, vai 
-        2.nodzēst to skaitli, kas ir palicis bez pāra un atņemt vienu punktu no pretinieka punktu skaita.  
-4.Spēle beidzas, kad skaitļu virknē paliek viens skaitlis. Uzvar spēlētājs, kam ir vairāk punktu. 
+   Spēlētājs izpilda gājienus pēc kārtas. 
+4. Gājiena laikā spēlētājs var saskaitīt skaitļu pāri (jebkurus divus skaitļus blakus viens otram), summa tad tiek ierakstīta to vietā:
+     --> Ja summa ir lielāka par 6, tad pieskaita vienu punktu spēlētāja punktu skaitam un notiek aizvietošana: 7 = 1, 8 = 2, 9 = 3, 10 = 4, 11=5, 12=6
+     --> Ja summa ir mazāka par 6, tad atņem vienu punktu no spēlētāja punktu skaita.
+5. Spēle beidzas, kad skaitļu virknē paliek viens skaitlis. Uzvar spēlētājs, kam ir vairāk punktu. 
 
 
                                 Spied 'Sapratu', lai turpinātu.
