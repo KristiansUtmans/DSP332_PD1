@@ -145,16 +145,16 @@ def handle_button_click(index):
         if abs(i1 - i2) == 1:  # Pārliecinās lai būtu atzīmēti blakus pāri
             num1 = current_sequence[i1]
             num2 = current_sequence[i2]
-            combined_value = num1 + num2 if num1 + num2 <= 6 else (num1 + num2 - 6)
+            combined_value = num1 + num2 if num1 + num2 < 6 else (num1 + num2 - 6)
             current_sequence = current_sequence[:min(i1, i2)] + [combined_value] + current_sequence[max(i1, i2) + 1:]
 
             if turn == "player":
-                if (num1 + num2) <= 6:
+                if (num1 + num2) < 6:
                     player_score += 1
                 else:
                     player_score -= 1
             else:
-                if (num1 + num2) <= 6:
+                if (num1 + num2) < 6:
                     opponent_score += 1
                 else:
                     opponent_score -= 1

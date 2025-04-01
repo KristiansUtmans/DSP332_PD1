@@ -16,7 +16,7 @@ Mākslīgā intelekta pamati(1),24/25-P 1.praktiskais darbs
 3. Spēles sākumā ir dota ģenerētā skaitļu virkne un abu spēlētāju punktu skaits ir 0.
 4. Spēlētājs izpilda gājienus pēc kārtas. 
    - Gājiena laikā spēlētājs var saskaitīt skaitļu pāri (jebkurus divus skaitļus blakus viens otram), summa tad tiek ierakstīta to vietā:
-     - Ja summa ir lielāka par 6, tad pieskaita vienu punktu spēlētāja punktu skaitam un notiek aizvietošana: 7 = 1, 8 = 2, 9 = 3, 10 = 4, 11=5, 12=6
+     - Ja summa ir lielāka vai vienāda par 6, tad pieskaita vienu punktu spēlētāja punktu skaitam un notiek aizvietošana: 6 = 0, 7 = 1, 8 = 2, 9 = 3, 10 = 4, 11=5, 12=6
      - Ja summa ir mazāka par 6, tad atņem vienu punktu no spēlētāja punktu skaita.
      
 
