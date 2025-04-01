@@ -1,6 +1,9 @@
 # DSP332_PD1
 Mākslīgā intelekta pamati(1),24/25-P 1.praktiskais darbs
 
+## Pēc koda nopullošanas, vajag instalēt nepieciešamās pakotnes: "pip install -r requirements".
+## frontend.py ir fails, kas ir jāpalaiž, lai ieslēgtos lietotāja sasarkne un varētu sākt spēles darbību.
+
 # Spēles apraksts
 - Spēles sākumā cilvēks-spēlētājs norāda spēlē izmantojamas skaitļu virknes garumu, kas var būt diapazonā no 15 līdz 25 skaitļiem.
 - Spēles programmatūra gadījuma ceļā saģenerē skaitļu virkni atbilstoši uzdotajam garumam, tajā iekļaujot skaitļus no 1 līdz 6.
